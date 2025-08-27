@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TripChung" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- You can override colors/typography here later -->
+    </style>
+</resources>
