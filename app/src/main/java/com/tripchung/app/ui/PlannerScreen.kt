@@ -8,11 +8,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,72 +22,46 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlannerScreen(
-    onNavChange: (String) -> Unit = {} // 필요하면 바텀탭 이동 콜백
+    onDone: (answers: Map<String, String>) -> Unit = {}
 ) {
-    val categories = listOf(
-        "힐링 여행", "액티비티 여행",
-        "문화 탐방", "맛집 투어",
-        "자연 감상", "사진 촬영"
-    )
-    var selected by remember { mutableStateOf<String?>(null) }
+    // 현재 질문 단계 (0~3)
+    var step by remember { mutableStateOf(0) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar(tonalElevation = 0.dp) {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { onNavChange("home") },
-                    icon = { Icon(Icons.Outlined.Home, null) },
-                    label = { Text("홈") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onNavChange("search") },
-                    icon = { Icon(Icons.Outlined.Search, null) },
-                    label = { Text("검색") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onNavChange("nearby") },
-                    icon = { Icon(Icons.Outlined.LocationOn, null) },
-                    label = { Text("주변") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onNavChange("fav") },
-                    icon = { Icon(Icons.Outlined.FavoriteBorder, null) },
-                    label = { Text("찜") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { onNavChange("me") },
-                    icon = { Icon(Icons.Outlined.Person, null) },
-                    label = { Text("마이") }
-                )
-            }
-        }
-    ) { inner ->
+    // 설문 답변 저장
+    val answers = remember { mutableStateMapOf<String, String>() }
+
+    // 질문/선택지 리스트
+    val questions = listOf(
+        "어떤 여행을 원하시나요?" to listOf("힐링 여행", "액티비티", "문화 탐방", "맛집 투어", "자연 감상", "사진 촬영"),
+        "누구와 함께 가시나요?" to listOf("혼자", "연인", "가족", "친구", "단체"),
+        "어떤 활동을 선호하시나요?" to listOf("도보 탐방", "체험/액티비티", "휴양/휴식", "쇼핑", "역사/문화"),
+        "숙소는 어떤 스타일을 원하시나요?" to listOf("호텔", "펜션", "게스트하우스", "캠핑/카라반", "럭셔리 리조트")
+    )
+
+    val (title, options) = questions[step]
+    val selected = answers[title]
+
+    Scaffold { inner ->
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(inner)
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            // 상단 타이틀 라인
+            // 상단 진행 표시
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("질문 1/4", style = MaterialTheme.typography.labelLarge)
-                TextButton(onClick = { /* TODO: 건너뛰기 */ }) {
-                    Text("건너뛰기")
+                Text("질문 ${step + 1}/${questions.size}", style = MaterialTheme.typography.labelLarge)
+                if (step < questions.lastIndex) {
+                    TextButton(onClick = { step++ }) { Text("건너뛰기") }
                 }
             }
 
-            // 진행바
             LinearProgressIndicator(
-                progress = { 0.25f },
+                progress = { (step + 1f) / questions.size },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
@@ -101,7 +70,7 @@ fun PlannerScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // 동그란 아이콘
+            // 아이콘
             Box(
                 modifier = Modifier
                     .size(108.dp)
@@ -119,6 +88,7 @@ fun PlannerScreen(
             }
 
             Spacer(Modifier.height(16.dp))
+
             Text(
                 text = "AI 여행 플래너",
                 style = MaterialTheme.typography.headlineSmall,
@@ -127,7 +97,7 @@ fun PlannerScreen(
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                text = "몇 가지 질문으로 완벽한 여행을 만들어드릴게요",
+                text = "완벽한 여행을 위해 간단한 질문에 답해주세요",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -138,14 +108,14 @@ fun PlannerScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // 카드 안의 질문 + 카테고리 그리드
+            // 질문 카드
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Column(Modifier.padding(20.dp)) {
                     Text(
-                        "어떤 여행을 원하시나요?",
+                        title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -157,10 +127,10 @@ fun PlannerScreen(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         modifier = Modifier.heightIn(min = 0.dp)
                     ) {
-                        items(categories) { c ->
-                            val isSel = selected == c
+                        items(options) { option ->
+                            val isSel = selected == option
                             OutlinedButton(
-                                onClick = { selected = if (isSel) null else c },
+                                onClick = { answers[title] = option },
                                 shape = RoundedCornerShape(18.dp),
                                 border = if (isSel) ButtonDefaults.outlinedButtonBorder.copy(
                                     brush = SolidColor(MaterialTheme.colorScheme.primary)
@@ -176,7 +146,7 @@ fun PlannerScreen(
                                     .height(64.dp)
                             ) {
                                 Text(
-                                    c,
+                                    option,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = if (isSel)
                                         MaterialTheme.colorScheme.primary
@@ -191,16 +161,22 @@ fun PlannerScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // 다음 버튼
+            // 버튼
             Button(
-                onClick = { /* TODO: 다음 질문 화면으로 이동 */ },
+                onClick = {
+                    if (step < questions.lastIndex) {
+                        step++
+                    } else {
+                        onDone(answers) // 완료 시 결과 전달
+                    }
+                },
                 enabled = selected != null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(14.dp)
             ) {
-                Text("다음")
+                Text(if (step < questions.lastIndex) "다음" else "완료")
             }
         }
     }
