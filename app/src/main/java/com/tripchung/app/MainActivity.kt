@@ -9,12 +9,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.tripchung.app.ui.HomeScreen
+import com.tripchung.app.ui.MyScreen
 import com.tripchung.app.ui.PlannerScreen
 import com.tripchung.app.ui.ResultScreen
 import com.tripchung.app.ui.nav.Routes
@@ -35,7 +36,6 @@ fun TripChungApp() {
     val currentDestination = backStackEntry?.destination
 
     Scaffold(
-        // ⭕️ 플래너 포함 모든 화면에서 공용 바텀바 노출
         bottomBar = {
             TripChungBottomBar(
                 navController = nav,
@@ -51,11 +51,10 @@ fun TripChungApp() {
                 }
 
                 composable(Routes.PLANNER) {
-                    // ⭕️ 설문 완료 시 어디로 갈지만 위임
                     PlannerScreen(
-                        onDone = { /* answers ->
-                            필요하면 answers 사용 */
-                            nav.navigate(Routes.HOME) {
+                        onDone = {
+                            // 설문 완료 후 이동 (원하면 결과 화면으로 바꿔도 됨)
+                            nav.navigate(Routes.RESULTS) {
                                 popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
@@ -66,15 +65,25 @@ fun TripChungApp() {
 
                 composable(Routes.RESULTS) {
                     ResultScreen(
-                        onAdd = { /* TODO: 일정에 추가 처리 */ },
-                        onToggleWish = { /* TODO: 찜 토글 처리 */ }
+                        onBack = { nav.popBackStack() },
+                        onAddToPlan = { /* placeName -> 일정 저장 처리 */ }
                     )
                 }
 
+                // ✅ 프로필 화면: 중복 선언 금지!
+                composable(Routes.PROFILE) {
+                    MyScreen(
+                        onMenuClick = { /* action -> 처리 */ },
+                        onSeeAllTrips = { /* 전체보기 이동 */ },
+                        // 권장: id 같은 원시값만 넘기도록 MyScreen 시그니처 맞추세요
+                        onRecentTripClick = { /* travelId -> 상세 이동 */ }
+                    )
+                }
+
+                // 다른 탭
                 composable(Routes.SEARCH) { /* SearchScreen() */ }
                 composable(Routes.NEARBY) { /* NearbyScreen() */ }
                 composable(Routes.FAVORITES) { /* FavoritesScreen() */ }
-                composable(Routes.PROFILE) { /* ProfileScreen() */ }
             }
         }
     }
