@@ -4,20 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.tripchung.app.ui.HomeScreen
-import com.tripchung.app.ui.MyScreen
-import com.tripchung.app.ui.PlannerScreen
-import com.tripchung.app.ui.ResultScreen
+import com.tripchung.app.ui.*
 import com.tripchung.app.ui.nav.Routes
 import com.tripchung.app.ui.nav.TripChungBottomBar
 import com.tripchung.app.ui.theme.TripChungTheme
@@ -35,16 +34,47 @@ fun TripChungApp() {
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
+    // 설문/결과 공유용 VM
+    val plannerVM: PlannerViewModel = viewModel()
+
     Scaffold(
         bottomBar = {
-            TripChungBottomBar(
-                navController = nav,
-                currentDestination = currentDestination
-            )
+            // 로그인/플래너에서는 하단바 숨김
+            val hideOn = setOf(Routes.LOGIN, Routes.PLANNER)
+            if (currentDestination?.route !in hideOn && currentDestination != null) {
+                TripChungBottomBar(
+                    navController = nav,
+                    currentDestination = currentDestination
+                )
+            }
         }
     ) { innerPadding ->
-        Box(Modifier.padding(innerPadding)) {
-            NavHost(navController = nav, startDestination = Routes.HOME) {
+        Box(Modifier.fillMaxSize().padding(innerPadding)) {
+
+            NavHost(
+                navController = nav,
+                startDestination = Routes.LOGIN
+            ) {
+                // ✅ 로그인 화면 실제 연결
+                composable(Routes.LOGIN) {
+                    LoginScreen(
+                        onLoginSuccess = {
+                            nav.navigate(Routes.HOME) {
+                                // 로그인 화면 제거 + 상태 복원
+                                popUpTo(nav.graph.findStartDestination().id) { inclusive = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        onBrowse = { // “둘러보기” 버튼 등
+                            nav.navigate(Routes.HOME) {
+                                popUpTo(nav.graph.findStartDestination().id) { inclusive = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
 
                 composable(Routes.HOME) {
                     HomeScreen(onPlanClick = { nav.navigate(Routes.PLANNER) })
@@ -52,8 +82,8 @@ fun TripChungApp() {
 
                 composable(Routes.PLANNER) {
                     PlannerScreen(
+                        plannerViewModel = plannerVM,
                         onDone = {
-                            // 설문 완료 후 이동 (원하면 결과 화면으로 바꿔도 됨)
                             nav.navigate(Routes.RESULTS) {
                                 popUpTo(nav.graph.findStartDestination().id) { saveState = true }
                                 launchSingleTop = true
@@ -65,25 +95,31 @@ fun TripChungApp() {
 
                 composable(Routes.RESULTS) {
                     ResultScreen(
+                        plannerViewModel = plannerVM,
                         onBack = { nav.popBackStack() },
-                        onAddToPlan = { /* placeName -> 일정 저장 처리 */ }
+                        onAddToPlan = { /* TODO: 일정 저장 */ }
                     )
                 }
 
-                // ✅ 프로필 화면: 중복 선언 금지!
-                composable(Routes.PROFILE) {
-                    MyScreen(
-                        onMenuClick = { /* action -> 처리 */ },
-                        onSeeAllTrips = { /* 전체보기 이동 */ },
-                        // 권장: id 같은 원시값만 넘기도록 MyScreen 시그니처 맞추세요
-                        onRecentTripClick = { /* travelId -> 상세 이동 */ }
-                    )
-                }
-
-                // 다른 탭
                 composable(Routes.SEARCH) { /* SearchScreen() */ }
                 composable(Routes.NEARBY) { /* NearbyScreen() */ }
-                composable(Routes.FAVORITES) { /* FavoritesScreen() */ }
+                composable(Routes.FAVORITES) {
+                    FavoritesScreen(
+                        onAddPlaceToPlan = { /* TODO */ },
+                        onOpenPlan = { /* TODO */ },
+                        onDuplicatePlan = { /* TODO */ },
+                        onSharePlace = { /* TODO */ },
+                        onSharePlan = { /* TODO */ },
+                        onEditTap = { /* TODO */ }
+                    )
+                }
+                composable(Routes.PROFILE) {
+                    MyScreen(
+                        onMenuClick = { /* TODO */ },
+                        onSeeAllTrips = { /* TODO */ },
+                        onRecentTripClick = { /* TODO */ }
+                    )
+                }
             }
         }
     }

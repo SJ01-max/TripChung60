@@ -12,6 +12,8 @@ object Routes {
     const val PROFILE = "me"
     const val RESULTS = "results"
     const val PLANNER = "planner"   // 바텀탭은 아니지만 화면 라우트
+
+    const val LOGIN = "login"
 }
 
 data class BottomTab(val route: String, val label: String, val icon: ImageVector)
