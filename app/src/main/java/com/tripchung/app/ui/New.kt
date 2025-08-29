@@ -7,9 +7,4 @@ fun New(){
     print("hello")
     print("hello")
     print("hello")
-
-
-
-
-
 }

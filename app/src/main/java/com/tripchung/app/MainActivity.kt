@@ -102,7 +102,9 @@ fun TripChungApp() {
                 }
 
                 composable(Routes.SEARCH) { /* SearchScreen() */ }
-                composable(Routes.NEARBY) { /* NearbyScreen() */ }
+                composable(Routes.NEARBY) {
+                    NearbyWidgetScreen(onBack = { nav.popBackStack() })
+                }
                 composable(Routes.FAVORITES) {
                     FavoritesScreen(
                         onAddPlaceToPlan = { /* TODO */ },

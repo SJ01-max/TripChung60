@@ -3,6 +3,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://devrepo.kakao.com/nexus/repository/kakaomap-releases/")
     }
     plugins {
         id("com.android.application") version "8.5.2"
@@ -15,6 +16,16 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+        // ✅ 카카오맵 라이브러리 저장소 (중요)
+        maven("https://devrepo.kakao.com/nexus/repository/kakaomap-releases/")
     }
 }
 
