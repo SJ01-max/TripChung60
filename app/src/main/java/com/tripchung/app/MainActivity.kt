@@ -53,7 +53,7 @@ fun TripChungApp() {
 
             NavHost(
                 navController = nav,
-                startDestination = Routes.LOGIN
+                startDestination = Routes.HOME
             ) {
                 // ✅ 로그인 화면 실제 연결
                 composable(Routes.LOGIN) {
